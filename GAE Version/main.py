@@ -1,5 +1,5 @@
 import webapp2, jinja2, os
-import RPi.GPIO as pi
+import RPi.GPIO as GPIO
 
 from google.appengine.ext import db
 
@@ -8,7 +8,7 @@ from google.appengine.ext import db
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir), autoescape = True)
 
-GPIO.setmode(GPI.BOARD)
+GPIO.setmode(GPIO.BOARD)
 
 # [right motor one pin, left motor two pin]
 motorsINT = [21, 22]

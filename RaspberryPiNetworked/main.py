@@ -1,19 +1,18 @@
 import socket, pygame, hashlib
 
 piIP = '192.168.0.101'
+localIP = 'localhost'
 uberSecretPassword = '>8Y\JNtK:,\</(#2sP"/UU)R3NRrKp~+j@Z.DVfF'
 send_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 port = 9986
 
-recieve_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-recieve_socket.bind(piIP, port)
+# recieve_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+# recieve_socket.bind((piIP, port))
 
 def make_secure(s):
     return hashlib.sha256(s + uberSecretPassword).hexdigest()
 
 class ConnectionHandler:
-    def __init__(self):
-
     @staticmethod
     def takeInData(piIP):
         data, addr = recieve_socket.recvfrom(1024)
@@ -35,6 +34,7 @@ class PyGameWindow:
 
     def send(self, s):
         ConnectionHandler.sendData(s)
+        print('sending:%s' % s)
 
     def KeyStrokeHandler(self, key):
         if key == pygame.K_RIGHT:
@@ -54,6 +54,6 @@ class PyGameWindow:
                     self.KeyStrokeHandler(event.key)
 
 
-if __name__ = "__main__":
+if __name__ == "__main__":
     MainWindow = PyGameWindow()
     MainWindow.MainLoop()

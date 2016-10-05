@@ -1,16 +1,17 @@
-import socket, hashlib
+import socket, hashlib, datetime
 from RPi import GPIO
 
 uberSecretPassword = '>8Y\JNtK:,\</(#2sP"/UU)R3NRrKp~+j@Z.DVfF'
 # [left, right]
 motorsPins = [1, 2]
 computerIP = ''
+localIP = 'localhost'
 port = 9986
 
 send_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 recieve_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-recieve_socket.bind(computerIP, port)
+recieve_socket.bind((localIP, port))
 
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(motorsPins, GPIO.OUT)

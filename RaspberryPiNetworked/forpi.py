@@ -2,10 +2,11 @@ import socket, hashlib, datetime
 from RPi import GPIO
 
 uberSecretPassword = '>8Y\JNtK:,\</(#2sP"/UU)R3NRrKp~+j@Z.DVfF'
+magicalNumber = 421948395773
 # [left, right]
-motorsPins = [1, 2]
+motorsPins = [3, 5]
 computerIP = ''
-localIP = 'localhost'
+localIP = '127.0.0.1'
 port = 9986
 
 send_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -16,11 +17,29 @@ recieve_socket.bind((localIP, port))
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(motorsPins, GPIO.OUT)
 
+def check_secure(s):
+    date = datetime.datetime.now()
+    try:
+        command = s.split(":|:")[0]
+        sentHash = s.split(":|:")[1]
+
+        myHash = hashlib.sha256((str(date.year + date.month + date.day + date.hour + date.minute + magicalNumber) + uberSecretPassword).encode()).hexdigest()
+
+        if sentHash == myHash:
+            print("COMMAND:%s" % command)
+            return command
+        else:
+            print('Unauthenticated user trying to send commands!')
+    except:
+        print("Who sent me a bad packet!")
+
+
 class ConnectionHandler:
     @staticmethod
     def takeInData():
         data, addr = recieve_socket.recvfrom(1024)
-        return data.decode()
+
+        return check_secure(data.decode())
 
     @staticmethod
     def sendData(s):
@@ -52,4 +71,7 @@ class MotorHandler:
         GPIO.write(motorsPins, GPIO.LOW)
 
 if __name__ == "__main__":
-    MotorHandler()
+    try:
+        MotorHandler()
+    except:
+        GPIO.cleanup()

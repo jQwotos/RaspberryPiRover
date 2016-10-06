@@ -1,9 +1,7 @@
-import socket, pygame, hashlib, datetime
+import socket, pygame, hashlib, datetime, secrets
 
 piIP = '192.168.0.111'
 localIP = '127.0.0.1'
-uberSecretPassword = '>8Y\JNtK:,\</(#2sP"/UU)R3NRrKp~+j@Z.DVfF'
-magicalNumber = 421948395773
 send_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 port = 9986
 
@@ -12,7 +10,7 @@ recieve_socket.bind((localIP, port))
 
 def make_secure(s):
     date = datetime.datetime.now()
-    return s + ":|:" + hashlib.sha256((str(date.year + date.month + date.day + date.hour + date.minute + magicalNumber) + uberSecretPassword).encode()).hexdigest()
+    return s + ":|:" + hashlib.sha256((str(date.year + date.month + date.day + date.hour + date.minute + secrets.magicalNumber) + secrets.uberSecretPassword).encode()).hexdigest()
 
 class ConnectionHandler:
     @staticmethod

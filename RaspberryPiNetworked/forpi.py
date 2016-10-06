@@ -1,8 +1,6 @@
 import socket, hashlib, datetime
 from RPi import GPIO
 
-uberSecretPassword = '>8Y\JNtK:,\</(#2sP"/UU)R3NRrKp~+j@Z.DVfF'
-magicalNumber = 421948395773
 # [left, right]
 motorsPins = [3, 5]
 computerIP = ''

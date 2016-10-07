@@ -1,11 +1,13 @@
-import socket, hashlib, datetime
+import socket, asyncio, security, cv2, numpy, convertIP
 from RPi import GPIO
 
 # [left, right]
+computerIP = '192.168.0.111'
 motorsPins = [3, 5]
-computerIP = ''
-localIP = '192.168.1.101'
+localIP = 'auto'
 port = 9986
+
+localIP = convertIP.checkIP(localIP)
 
 send_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -17,35 +19,37 @@ GPIO.setup(motorsPins, GPIO.OUT)
 
 class ConnectionHandler:
     @staticmethod
-    def check_secure(s):
-        date = datetime.datetime.now()
-        try:
-            command = s.split(":|:")[0]
-            sentHash = s.split(":|:")[1]
-            myHash = hashlib.sha256((str(date.year + date.month + date.day + date.hour + date.minute + magicalNumber) + uberSecretPassword).encode()).hexdigest()
-
-            if sentHash == myHash:
-                print("COMMAND:%s" % command)
-                return command
-            else:
-                print('Unauthenticated user trying to send commands!')
-        except:
-            print("Who sent me a bad packet!")
-
-    @staticmethod
     def takeInData():
-        print("waiting for data")
         data, addr = recieve_socket.recvfrom(1024)
-        print('recieved data')
-        return ConnectionHandler.check_secure(data.decode())
+        return security.check_secure(data.decode())
 
     @staticmethod
     def sendData(s):
-        # send info data
-        pass
+        send_socket.sendto(security.make_secure(s).encode(), (computerIP, port))
+
+class OpenCV(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self.cap = cv2.VideoCapture(0)
+
+    def run(self):
+        while True:
+            ret, img = self.cap.read()
+
+            r = 100.0 / img.shape[1]
+            dim = (100, int(img.shape[0] * r))
+
+            img = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
+
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            gray = gray.flatten().tostring()
+
+            frame = gray.flatten().tostring()
+            ConnectionHandler.sendData(frame)
 
 class MotorHandler:
-    def __init__(self):
+    @staticmethod
+    def start():
         while True:
             data = ConnectionHandler.takeInData()
             if data:
@@ -63,13 +67,21 @@ class MotorHandler:
                     self.allStop()
                     break
 
-        GPIO.cleanup()
-
     def allStop(self):
         GPIO.write(motorsPins, GPIO.LOW)
 
-if __name__ == "__main__":
+def main():
+    cvThread = OpenCV()
     try:
-        MotorHandler()
-    except:
+        MotorHandler.start()
+        cvThread.start()
+    except KeyboardInterrupt:
+        cvThread.stop()
+        cvThread.cap.release()
+        cv2.destroyAllWindows()
+    finally:
         GPIO.cleanup()
+
+
+if __name__ == "__main__":
+    main()

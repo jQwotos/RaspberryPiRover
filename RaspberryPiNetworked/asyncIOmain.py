@@ -1,28 +1,40 @@
-import socket, pygame, hashlib, datetime, secrets
+import socket, pygame, secrets, asyncio, security
 
 piIP = '192.168.1.101'
-localIP = '127.0.0.1'
+localIP = '192.168.0.111'
 send_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 port = 9986
 
 recieve_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 recieve_socket.bind((localIP, port))
 
-def make_secure(s):
-    date = datetime.datetime.now()
-    return s + ":|:" + hashlib.sha256((str(date.year + date.month + date.day + date.hour + date.minute + secrets.magicalNumber) + secrets.uberSecretPassword).encode()).hexdigest()
-
-class ConnectionHandler:
+def waitForData():
+    data = asyncio.async(ConnectionHandler.takeInData())
+    return data
+'''
+class Receiver:
     @staticmethod
-    def takeInData(piIP):
-        data, addr = recieve_socket.recvfrom(1024)
-        if piIP == addr:
-            # do something with data
-            pass
+    @asyncio.coroutine
+    def start():
+        print("y you no start!")
+        while True:
+            print("Waiting for data!")
+            data = yield from ConnectionHandler.takeInData()
+            print(data)
+'''
+class ConnectionHandler:
+    @asyncio.coroutine
+    @staticmethod
+    def takeInData():
+        print("poop")
+        data, addr = yield from recieve_socket.recvfrom(1024)
+        print("Here I am!")
+        print(data)
+        return data
 
     @staticmethod
     def sendData(s):
-        send_socket.sendto(make_secure(s).encode(),(piIP, port))
+        send_socket.sendto(security.make_secure(s).encode(),(piIP, port))
 
 class PyGameWindow:
     def __init__(self):
@@ -44,8 +56,11 @@ class PyGameWindow:
         elif key == pygame.K_UP:
             self.send("move forward")
 
+    @asyncio.coroutine
     def MainLoop(self):
+        print("potatoes")
         while True:
+            data = waitForData()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     exit()
@@ -53,7 +68,16 @@ class PyGameWindow:
                 if event.type == pygame.KEYDOWN:
                     self.KeyStrokeHandler(event.key)
 
+def main():
+    MainWindow = PyGameWindow()
+    loop = asyncio.get_event_loop()
+    try:
+        loop.run_until_complete(MainWindow.MainLoop())
+    except KeyboardInterrupt:
+        loop.close()
+    finally:
+        loop.close()
+
 
 if __name__ == "__main__":
-    MainWindow = PyGameWindow()
-    MainWindow.MainLoop()
+    main()

@@ -1,30 +1,40 @@
-import socket, pygame, hashlib, datetime, secrets
+import socket, pygame, security, threading
 
 piIP = '192.168.1.101'
-localIP = '127.0.0.1'
+localIP = '192.168.0.111'
 send_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 port = 9986
 
 recieve_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 recieve_socket.bind((localIP, port))
 
-def make_secure(s):
-    date = datetime.datetime.now()
-    return s + ":|:" + hashlib.sha256((str(date.year + date.month + date.day + date.hour + date.minute + secrets.magicalNumber) + secrets.uberSecretPassword).encode()).hexdigest()
+class Reciever(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+        pass
+
+    def run(self):
+        while True:
+            data, addr = recieve_socket.recvfrom(1024)
+            data = security.check_secure(data.decode())
+            if data:
+                print(data)
+
 
 class ConnectionHandler:
     @staticmethod
-    def takeInData(piIP):
-        data, addr = recieve_socket.recvfrom(1024)
-        if piIP == addr:
-            # do something with data
-            pass
+    def takeInData():
+        print("poop")
+        data, addr = yield from recieve_socket.recvfrom(1024)
+        print("Here I am!")
+        print(data)
+        return data
 
     @staticmethod
     def sendData(s):
-        send_socket.sendto(make_secure(s).encode(),(piIP, port))
+        send_socket.sendto(security.make_secure(s).encode(),(piIP, port))
 
-class PyGameWindow:
+class PyGameWindow():
     def __init__(self):
         pygame.init()
         self.width = 100
@@ -44,7 +54,7 @@ class PyGameWindow:
         elif key == pygame.K_UP:
             self.send("move forward")
 
-    def MainLoop(self):
+    def run(self):
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -53,7 +63,14 @@ class PyGameWindow:
                 if event.type == pygame.KEYDOWN:
                     self.KeyStrokeHandler(event.key)
 
-
 if __name__ == "__main__":
-    MainWindow = PyGameWindow()
-    MainWindow.MainLoop()
+    pyGame = PyGameWindow()
+    recieverThread = Reciever()
+
+    try:
+        recieverThread.start()
+        pyGame.run()
+        print("r started")
+    except KeyboardInterrupt:
+        print("interupted by keyboard")
+        recieverThread.stop()
